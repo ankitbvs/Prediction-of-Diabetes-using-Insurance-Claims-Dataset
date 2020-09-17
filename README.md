@@ -17,62 +17,113 @@
 * [Results and Conclusion](#results-and-conclusion)
 
 ### Introduction
-The objective of the project is to develop a product recommendation system based on the customer’s interest. The purchase history is retrieved to capture customer’s inclination for a set of products available in the store. The data extraction, exploration, transformation and analysis would be achieved through Apache Spark system. Based on the analysis, the system would recommend products for customers who would most likely be inclined to buy a set of products along with the current product picked up for check out. This recommendation system is intended to help e-commerce web sites to service customers with appropriate recommendations at the right time with an attractive price tag.
+Diabetes is a highly prevalent and expensive chronic condition, costing about $330 billion to Americans annually. Most of the cost is attributed to the ‘type-2’ version of diabetes, which is typically diagnosed in middle age.
+
+Today is December 31, 2016,  a commercial health insurance company has contracted you to predict which of their members are most likely to be newly-diagnosed with type-2 diabetes in 2017. Your goal is to featurize their data, train and optimize a predictive model, and explain your results and approach. (Note: “newly-diagnosed” means members who were NOT previously coded with diabetes prior to 2016-12-31, inclusive).
 
 ### Problem Statement
-* Build a product recommendation system based on the customer’s interest.
+* Your goal is to featurize the INsurance claims data, and train and optimize a predictive model to find the risk of diabetes in patients.
 
 ### Data Source
-* The Dataset was obtained from the website: https://nijianmo.github.io/amazon/index.html
-  The data set is a part of Amazon review dataset released in 2014, provided by UCSD.
+* The Dataset was provided by Lumiata company which deals with Healthcare insurance claims
 
 ### Technologies
 * Python 3.6.7
-* PySpark 3.0.0
 
 ### Type of Data
-* The data set contains data for 287,209 products with 5,074,160 reviews and ratings by 1, 57,386 unique users.
-* The data does not contain any null values
-* Train : 80%
-* Test  : 20%
+* The data provided are real patient claims records from a large insurance company, appropriately de-identified. The data sets have already been split into training and test sets (‘train.txt’ & ‘test.txt’).
+* Train : 70%
+* Test  : 30%
 
+Each line in both text files is a patient record, represented as a json string. The health record is
+parameterized by a set of encounter dates in a YYYY-MM-DD format. The structure of each
+patient json is as follows:
+- ‘bday’ - patient date of birth in YYYY-MM-DD format
+- ‘is_male’ - True = Male, False = Female
+- ‘patient_id’ - de-identified patient id (each patient is given a unique value)
+- ‘resources’ - dictionary of encounter_date → list of codes (described below)
+- ‘observations’ - dictionary of encounter_date → list of dictionaries (described below)
+- ‘tag_dm2’ - indicates date of first type-2 diabetes diagnosis - will either have a
+YYYY-MM-DD date or be an empty ‘’ string; this information will be censored from the
+holdout set. (described above)
+- ‘split’ - indicates a member is in the ‘train’ or ‘test’ set; information beyond 2017-01-01
+has been removed from test.txt .
+Each patient record has a key ‘tag_dm2’, whose value is either a ‘YYYY-MM-DD’ date string
+indicating the date of first code of a diagnosis of diabetes, or an empty string ‘’ (indicating no
+diabetes in their record).
+
+You should cohort your data (i.e construct the response variable) in the training set according to
+the following definitions (check your work with the training set counts given below for each
+definition):
+
+- A ‘ claim ’ is someone whose ‘tag_dm2’ date is between 2017-01-01 and 2017-12-31,
+inclusive (training set count of ‘claim’ = 3410) - the response for these members is a ‘1’
+- A ‘ never-claim ’ is someone whose ‘tag_dm2’ date is either after 2017-12-31, exclusive,
+or is an empty string ‘’ (training set count of ‘never-claim’ = 70110) - the response for
+these members is a ‘0’
+- A ‘ prior ’ is someone whose ‘tag_dm2’ date is before 2017-01-01, exclusive - typically
+‘priors’ are filtered out of the matrix before training. You may include these people in
+training, but keep in mind they will be filtered out of ‘test’ when we evaluate your solution.
+Each patient record also has two keys describing their health history - ‘resources’ &
+‘observations’.
+The ‘resources’ key specifies the diagnoses, medications, and procedures that were
+noted/prescribed/performed at each doctor’s visit - these are represented by different coding
+systems (icd9/10, rxnorm, cpt, respectively.) Each encounter date in the ‘resources’ key is
+mapped to the corresponding list of codes issued at that doctor’s visit.
+
+![alt text](res1.PNG)
+
+The codes have the format <system>_<code>. For instance, ‘icd9_272.0’, which corresponds to
+high cholesterol:
+http://www.icd9data.com/2015/Volume1/240-279/270-279/272/272.0.htm
+Note - encounter dates in ‘resources’ can sometimes have no codes in the code list!
+The ‘observations’ key specifies the lab tests that were completed - each encounter date is
+mapped to a list of dictionaries, each of which has the following keys:
+- ‘code’ - the ‘loinc’ code corresponding to the lab test
+- ‘interpretation’ - whether the lab was ‘H’ for high, ‘L’ for low, ‘N’ for normal, or ‘A’ for
+abnormal
+- ‘value’ - the value extracted from the lab
+
+![alt text](res2.PNG)
+
+For instance, the lab could have been a blood glucose test ‘loinc_2345-7’, whose value may
+have been 130, and hence whose interpretation would be ‘H’ (a cut-off for high blood glucose is
+106:
+https://s.details.loinc.org/LOINC/2345-7.html?sections=Comprehensive )
+Note - the values in the ‘interpretation’ and ‘value’ keys can sometimes be ‘None’!
+The keys in the ‘resources’ and ‘observation’ dictionary correspond to the encounter date with
+the doctor. All dates are formatted as string in YYYY-MM-DD format, e.g. “2016-04-30”.
+The format of the file you submit to us should be a csv file, formatted as
+‘<your_name_here>_dm2_solution.csv’. We should be able to read in your solution using
+pandas as follows:
+
+![alt text](res3.PNG)
+
+  
 ### Data Pre-processing
-* Tokenizing, removal of stop words and stemming was done for textual data
+* Stratified Sampling to obtain a balanced dataset
+* Converting the complicated JSON file to a dataframe
 
 ### Algorithms Implemented
-* K-Means (Context Based Filtering)
-* ALS Collaborative Filtering Algorithm
+* Logistic Regression
+* Support Vector Classifier (SVC)
 
 ### Steps Involved
 
-## Technique 1 - K-Means(Context Based Filtering)
-* Based on the reviews obtained above we have created its TF-IDF using TfidfVectorizer function.
-* Since we are handling huge amount of data with our data frame having 5,074,160 reviews we have done rest of the operations in Apache Spark for efficient and faster handling of big data. We have created a Spark data frame from the pandas reviews data frame
-* Next we have created a data cleaning pipeline using the Pipeline function in which we have cleaned the spark data frame by tokenizing the reviews, removing stop words, calculated the term frequencies (TF) and IDF for the tokenized words.
-* We have clustered the products. So now whenever a new input keyword has been searched, it would pass through pipeline for cluster assignment. Products under the respective cluster are up for recommendation.
-
-## Technique 2 - ALS Collaborative Filtering Algorithm
-* We have obtained a Spark data frame containing item id, user id and ratings
-* Alternating Least Squares algorithm requires the inputs to be numerical and integers with value less than 2,147,483,647 (32-bit limit). So we have created new index for      item_id and user_id using StringIndexer with definitive mapped values for each user and item.
-* We have split the data into (80%) training and (20%) testing. We have used ALS (Alternating Least Squares) algorithm for training the data.
-* We have evaluated the model on the test data. We have got RMSE value of 1.134. We thought that it might be over fitting the data so we implemented 5-fold Cross Validation in the next step.
-* After implementing 5-fold ALS Cross Validation and evaluating on the test data we have obtained a RMSE value of 0.8345 which showed an improvement from the previous time.
-* Finally, using our model we are obtaining TOP 10 recommendations for all the users in our data frame.
+STEP 1 : Since it was a highly unbalanced data, balancing the dataset using Stratified Sampling technique. I have taken the demographic age variable while using this technique
+STEP 2 : Analyzed the ICD9 codes, cpt codes and resource codes and found out which variables contribute to chronic diabetes.
+STEP 3 : Removed some of the variables based on the number of unique values and created final dataframe from the complex JSON file.
+STEP 4 : Ran statistical tests to find the significant variables in the final dataframe.
+STEP 5 : After finding the most significant variables, ran SVC on the final variables and calculated the porbability of diabetes in each patient.
   
 ### Evaluation Metrics  
 RMSE (Root Mean Square Error) 
 
 ### Results and Conclusion
-By analyzing our dataset through various tools like R, Python, Pyspark we developed a product recommendation system based on the customer’s interest. We have used 2 different models for this purpose i.e. KNN and ALS Collaborative Filtering.
+By analyzing our dataset, we tried to find the probability of diabetes in each patient by considering their past medical tests and conditions.
 
-For the KNN which does context based filtering, we have tested our model with a test data which shows products under their respective cluster. It shows the products which are closely related to Kit Kat.
+The results of the Support Vector Classifier (SVC) are shown below - 
 
-![alt text](rec_res1.JPG)
+![alt text](res4.PNG)
 
-On implementing the ALS Collaborative Filtering Algorithm, we have used ALS model in which we have obtained RMSE value of 1.134.
-
-![alt text](rec_res2.JPG)
-
-On using 5-fold cross validation and evaluating on the test data the RMSE value showed an improvement. We obtained RMSE value of 0.8345.
-
-![alt text](rec_res3.JPG)
+![alt text](res5.PNG)
