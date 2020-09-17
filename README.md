@@ -1,7 +1,5 @@
 # Prediction-of-Patient-Diabetes-using-Insurance-Claims-Dataset
 
-# Amazon-Product-Recommendation-System
-
 ![alt text](amazon.JPG)
 
 ### Table of contents
