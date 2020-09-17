@@ -1,6 +1,6 @@
 # Prediction-of-Patient-Diabetes-using-Insurance-Claims-Dataset
 
-![alt text](amazon.JPG)
+![alt text](diabetes.PNG)
 
 ### Table of contents
 * [Introduction](#introduction)
