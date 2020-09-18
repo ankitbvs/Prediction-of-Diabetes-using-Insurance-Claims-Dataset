@@ -20,7 +20,7 @@ Diabetes is a highly prevalent and expensive chronic condition, costing about $3
 Today is December 31, 2016,  a commercial health insurance company has contracted you to predict which of their members are most likely to be newly-diagnosed with type-2 diabetes in 2017. Your goal is to featurize their data, train and optimize a predictive model, and explain your results and approach. (Note: “newly-diagnosed” means members who were NOT previously coded with diabetes prior to 2016-12-31, inclusive).
 
 ### Problem Statement
-* Your goal is to featurize the INsurance claims data, and train and optimize a predictive model to find the risk of diabetes in patients.
+* Your goal is to featurize the Insurance claims data, and train and optimize a predictive model to find the risk of diabetes in patients.
 
 ### Data Source
 * The Dataset was provided by Lumiata company which deals with Healthcare insurance claims
